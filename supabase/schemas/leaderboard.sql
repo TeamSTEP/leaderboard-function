@@ -1,6 +1,6 @@
 create table if not exists "leaderboard" (
     "id" bigint generated always as identity primary key,
-    "player_name" text not null unique,
+    "player_name" text not null,
     "score" integer not null default 0,
     "created_at" timestamptz not null default now()
 );
@@ -9,7 +9,7 @@ create index if not exists idx_leaderboard_player
     on "leaderboard" (player_name);
 
 create index if not exists idx_leaderboard_score
-    on "leaderboard" ("score" desc);
+    on "leaderboard" (score desc);
 
 
 alter table "leaderboard" enable row level security;
@@ -31,20 +31,4 @@ as $$
   group by l.player_name
   order by best_score desc
   limit 5;
-$$;
-
-create or replace function upsert_score(
-    p_name text,
-    p_score integer
-)
-returns table (player_name text, score integer)
-language sql
-as $$
-    insert into leaderboard (player_name, score, created_at)
-    values (p_name, p_score, now())
-    on conflict (player_name)
-    do update
-        set score = greatest(leaderboard.score, excluded.score),
-            created_at = now()
-    returning leaderboard.player_name, leaderboard.score;
 $$;
