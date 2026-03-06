@@ -1,7 +1,7 @@
 create table if not exists "leaderboard" (
     "id" bigint generated always as identity primary key,
     "player_name" text not null,
-    "score" integer not null default 0,
+    "score" bigint not null default 0,
     "created_at" timestamptz not null default now()
 );
 
@@ -15,12 +15,17 @@ create index if not exists idx_leaderboard_score
 alter table "leaderboard" enable row level security;
 
 create policy "Public read leaderboard"
-    on "leaderboard"
-    for select
+    on "leaderboard" for select
     using (true);
 
-create or replace function get_top_five_players()
-returns table (player_name text, best_score integer)
+-- migration from previous function
+drop function if exists get_top_five_players();
+
+alter table "leaderboard"
+    alter column "score" type bigint using score::bigint;
+
+create or replace function get_top_n_players(n integer default 5)
+returns table (player_name text, best_score bigint)
 language sql
 stable
 as $$
@@ -30,5 +35,5 @@ as $$
   from leaderboard l
   group by l.player_name
   order by best_score desc
-  limit 5;
+  limit n;
 $$;
