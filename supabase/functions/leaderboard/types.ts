@@ -2,6 +2,7 @@ export interface ScoreRow {
     id: number;
     player_name: string;
     score: string;
+    rank: number;
     created_at: string;
 }
 
