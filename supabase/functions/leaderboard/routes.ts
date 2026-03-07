@@ -190,12 +190,10 @@ const getPlayerScores = async (
   playerName: string,
   count: number,
 ): Promise<Response> => {
-  const { data, error } = await supabase
-    .from("leaderboard")
-    .select("id, score::text, created_at")
-    .eq("player_name", playerName)
-    .order("created_at", { ascending: false })
-    .limit(count);
+  const { data, error } = await supabase.rpc("get_player_scores", {
+    p_player_name: playerName,
+    p_count: count,
+  });
 
   if (error) throw error;
 
